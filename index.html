@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Holi | MY DEAR FAMILY</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  overflow:hidden;
+  font-family:sans-serif;
+  background:linear-gradient(-45deg,#ff0080,#ff8c00,#00ffff,#8a2be2,#ff0000);
+  background-size:400% 400%;
+  animation:gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove{
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+.bg-glow{
+  position:absolute;
+  width:400px;
+  height:400px;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:0.6;
+  animation:float 8s ease-in-out infinite alternate;
+  z-index:-2;
+}
+
+.glow1{background:#ff0080; top:10%; left:15%;}
+.glow2{background:#00ffff; bottom:10%; right:10%; animation-delay:3s;}
+.glow3{background:#ffff00; top:60%; left:45%; animation-delay:6s;}
+
+@keyframes float{
+  from{transform:translateY(-30px) scale(1);}
+  to{transform:translateY(40px) scale(1.2);}
+}
+
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:-1;
+}
+
+.hero{
+  position:absolute;
+  top:10%;
+  width:100%;
+  text-align:center;
+  color:white;
+  font-size:2rem;
+  text-shadow:0 0 40px white;
+}
+</style>
+</head>
+<body>
+
+<div class="bg-glow glow1"></div>
+<div class="bg-glow glow2"></div>
+<div class="bg-glow glow3"></div>
+
+<canvas id="canvas"></canvas>
+
+<div class="hero">
+🎨 Happy Holi 🎨
+</div>
+
+<audio id="boom">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-deep-explosion-with-reverb-275.wav">
+</audio>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const sound=document.getElementById("boom");
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+window.addEventListener("resize",()=>{
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+generateText();
+});
+
+let particles=[];
+let textPoints=[];
+let phase="explode";
+let shockwaveRadius=0;
+let shockwaveActive=false;
+let pulseRadius=0;
+
+const gravity=0.05;
+const friction=0.99;
+
+class Particle{
+
+constructor(x,y){
+this.x=x;
+this.y=y;
+this.vx=(Math.random()-0.5)*14;
+this.vy=(Math.random()-0.5)*14;
+this.targetX=x;
+this.targetY=y;
+this.size=2+Math.random()*2;
+this.baseHue=Math.random()*360;
+}
+
+update(){
+
+if(phase==="explode"){
+this.x+=this.vx;
+this.y+=this.vy;
+this.vx*=friction;
+this.vy*=friction;
+this.vy+=gravity;
+}
+
+if(phase==="form"){
+const dx=this.targetX-this.x;
+const dy=this.targetY-this.y;
+
+this.x+=dx*0.07;
+this.y+=dy*0.07;
+}
+
+this.draw();
+}
+
+draw(){
+
+let dist=Math.hypot(this.x-canvas.width/2,this.y-canvas.height/2);
+let hue=this.baseHue;
+
+if(Math.abs(dist-pulseRadius)<40){
+hue=(this.baseHue+180)%360;
+ctx.shadowBlur=25;
+}else{
+ctx.shadowBlur=8;
+}
+
+ctx.shadowColor=`hsl(${hue},100%,60%)`;
+ctx.fillStyle=`hsl(${hue},100%,60%)`;
+
+ctx.beginPath();
+ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+ctx.fill();
+}
+
+}
+
+function generateText(){
+
+textPoints=[];
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+const text="MY DEAR FAMILY";
+const fontSize=Math.min(canvas.width/10,120);
+
+ctx.fillStyle="white";
+ctx.textAlign="center";
+ctx.font="bold "+fontSize+"px Arial";
+ctx.fillText(text,canvas.width/2,canvas.height/2);
+
+const data=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+for(let y=0;y<canvas.height;y+=6){
+for(let x=0;x<canvas.width;x+=6){
+
+const i=(y*canvas.width+x)*4;
+
+if(data.data[i+3]>128){
+textPoints.push({x,y});
+}
+
+}
+}
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+particles=[];
+
+textPoints.forEach(()=>{
+particles.push(new Particle(canvas.width/2,canvas.height/3));
+});
+
+particles.forEach((p,i)=>{
+if(textPoints[i]){
+p.targetX=textPoints[i].x;
+p.targetY=textPoints[i].y;
+}
+});
+
+}
+
+function drawShockwave(){
+
+if(!shockwaveActive) return;
+
+ctx.beginPath();
+
+ctx.arc(canvas.width/2,canvas.height/2,shockwaveRadius,0,Math.PI*2);
+
+ctx.strokeStyle="rgba(255,255,255,"+(1-shockwaveRadius/Math.max(canvas.width,canvas.height))+")";
+
+ctx.lineWidth=5;
+ctx.shadowColor="#fff";
+ctx.shadowBlur=40;
+
+ctx.stroke();
+
+shockwaveRadius+=20;
+pulseRadius=shockwaveRadius;
+
+if(shockwaveRadius>Math.max(canvas.width,canvas.height)){
+shockwaveActive=false;
+}
+
+}
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+ctx.fillStyle="rgba(0,0,0,0.25)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+particles.forEach(p=>p.update());
+
+drawShockwave();
+
+}
+
+generateText();
+animate();
+
+function trigger(){
+
+phase="explode";
+
+particles.forEach(p=>{
+p.vx=(Math.random()-0.5)*16;
+p.vy=(Math.random()-0.5)*16;
+});
+
+shockwaveActive=true;
+shockwaveRadius=0;
+pulseRadius=0;
+
+sound.currentTime=0;
+sound.play();
+
+setTimeout(()=>{
+phase="form";
+},2000);
+
+}
+
+setTimeout(trigger,1000);
+setInterval(trigger,9000);
+
+</script>
+
+</body>
+</html>
