@@ -56,6 +56,25 @@
       position:fixed; z-index:5; pointer-events:none; font-size:1.5rem;
       transform:translate(-50%,-50%); animation:heartFloat 1.2s ease-out forwards;
     }
+    .touch-ring {
+      position:fixed; z-index:4; pointer-events:none; width:18px; height:18px;
+      border:3px solid var(--touch-color); border-radius:50%;
+      transform:translate(-50%,-50%); animation:ringExpand .85s ease-out forwards;
+      box-shadow:0 0 15px var(--touch-color),inset 0 0 10px var(--touch-color);
+    }
+    .touch-spark {
+      position:fixed; z-index:6; pointer-events:none; font-size:clamp(1rem,3vw,1.5rem);
+      transform:translate(-50%,-50%); animation:sparkFly 1.15s cubic-bezier(.15,.7,.3,1) forwards;
+      filter:drop-shadow(0 0 8px var(--touch-color));
+    }
+    @keyframes ringExpand {
+      0%{opacity:1;width:12px;height:12px;border-width:4px}
+      100%{opacity:0;width:190px;height:190px;border-width:1px}
+    }
+    @keyframes sparkFly {
+      0%{opacity:1;transform:translate(-50%,-50%) scale(.4) rotate(0deg)}
+      100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.6) rotate(180deg)}
+    }
     @keyframes touchRise {
       0%{opacity:0;transform:translate(-50%,-30%) scale(.45)}
       15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
@@ -147,25 +166,57 @@
           setTimeout(() => burst(w*(.15+Math.random()*.7), h*(.12+Math.random()*.48)), i*180);
         }
       });
-      // Touch or click anywhere to send a sparkling greeting to AMIRIT BHAIYA.
+      // Multicolour touch celebration for AMIRIT BHAIYA.
+      const touchColors = ['#ff4d6d','#ffd166','#06d6a0','#4cc9f0','#c77dff','#ff8fab','#f8f7ff'];
+      const touchEmojis = ['💛','❤️','💖','✨','🌟','🪔','🎉'];
       document.addEventListener('pointerdown', (event) => {
         if (event.target.closest('button')) return;
         const x = event.clientX;
         const y = event.clientY;
+        const color = touchColors[Math.floor(Math.random() * touchColors.length)];
+
         const name = document.createElement('div');
         name.className = 'touch-pop';
         name.textContent = '✨ AMIRIT BHAIYA ✨';
         name.style.left = x + 'px';
         name.style.top = y + 'px';
+        name.style.color = color;
+        name.style.textShadow = '0 0 9px ' + color + ', 0 0 24px ' + color + ', 0 2px 5px #321629';
         document.body.appendChild(name);
+
+        const ring = document.createElement('div');
+        ring.className = 'touch-ring';
+        ring.style.left = x + 'px';
+        ring.style.top = y + 'px';
+        ring.style.setProperty('--touch-color', color);
+        document.body.appendChild(ring);
+
         const heart = document.createElement('div');
         heart.className = 'touch-heart';
-        heart.textContent = '💛';
-        heart.style.left = (x + 24) + 'px';
-        heart.style.top = (y + 16) + 'px';
+        heart.textContent = touchEmojis[Math.floor(Math.random() * touchEmojis.length)];
+        heart.style.left = (x + 25) + 'px';
+        heart.style.top = (y + 15) + 'px';
         document.body.appendChild(heart);
+
+        // A colourful mini-sparkle shower radiates from every touch.
+        for (let i = 0; i < 12; i++) {
+          const spark = document.createElement('span');
+          spark.className = 'touch-spark';
+          spark.textContent = ['✦','✧','•','✨'][i % 4];
+          const angle = (Math.PI * 2 * i / 12) + Math.random() * .25;
+          const distance = 55 + Math.random() * 95;
+          spark.style.left = x + 'px';
+          spark.style.top = y + 'px';
+          spark.style.setProperty('--dx', (Math.cos(angle) * distance) + 'px');
+          spark.style.setProperty('--dy', (Math.sin(angle) * distance) + 'px');
+          spark.style.setProperty('--touch-color', touchColors[Math.floor(Math.random() * touchColors.length)]);
+          document.body.appendChild(spark);
+          spark.addEventListener('animationend', () => spark.remove(), {once:true});
+        }
+
         burst(x, y);
         name.addEventListener('animationend', () => name.remove(), {once:true});
+        ring.addEventListener('animationend', () => ring.remove(), {once:true});
         heart.addEventListener('animationend', () => heart.remove(), {once:true});
       });
     })();
