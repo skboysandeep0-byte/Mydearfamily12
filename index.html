@@ -42,6 +42,28 @@
     }
     button:focus-visible { outline:3px solid white; outline-offset:4px; }
     .hint { margin:.85rem 0 0; color:#cdb6c6; font: .75rem Arial,sans-serif; }
+    .touch-pop {
+      position:fixed; z-index:5; pointer-events:none; left:0; top:0;
+      transform:translate(-50%,-50%) scale(.5); opacity:0;
+      color:#ffe7a4; font:700 clamp(1rem,4vw,1.65rem) Arial,sans-serif;
+      letter-spacing:.08em; white-space:nowrap;
+      text-shadow:0 0 8px #ffb84d,0 0 22px #ff8c42,0 2px 4px #321629;
+      animation:touchRise 1.35s ease-out forwards;
+    }
+    .touch-heart {
+      position:fixed; z-index:5; pointer-events:none; font-size:1.5rem;
+      transform:translate(-50%,-50%); animation:heartFloat 1.2s ease-out forwards;
+    }
+    @keyframes touchRise {
+      0%{opacity:0;transform:translate(-50%,-30%) scale(.45)}
+      15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+      75%{opacity:1}
+      100%{opacity:0;transform:translate(-50%,-150%) scale(1.18)}
+    }
+    @keyframes heartFloat {
+      0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}
+      100%{opacity:0;transform:translate(-50%,-180%) scale(1.5)}
+    }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; scroll-behavior:auto!important; } }
   </style>
 </head>
@@ -76,7 +98,7 @@
     </p>
     <div class="signature">With lots of love, your brother 💛</div>
     <button id="celebrate" type="button">✨ Celebrate Diwali</button>
-    <p class="hint">Tap the button for a little fireworks surprise</p>
+    <p class="hint">Touch anywhere on the screen for a special surprise for AMIRIT BHAIYA 💛</p>
   </main>
   <script>
     (() => {
@@ -122,6 +144,27 @@
         for (let i=0;i<5;i++) {
           setTimeout(() => burst(w*(.15+Math.random()*.7), h*(.12+Math.random()*.48)), i*180);
         }
+      });
+      // Touch or click anywhere to send a sparkling greeting to AMIRIT BHAIYA.
+      document.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) return;
+        const x = event.clientX;
+        const y = event.clientY;
+        const name = document.createElement('div');
+        name.className = 'touch-pop';
+        name.textContent = '✨ AMIRIT BHAIYA ✨';
+        name.style.left = x + 'px';
+        name.style.top = y + 'px';
+        document.body.appendChild(name);
+        const heart = document.createElement('div');
+        heart.className = 'touch-heart';
+        heart.textContent = '💛';
+        heart.style.left = (x + 24) + 'px';
+        heart.style.top = (y + 16) + 'px';
+        document.body.appendChild(heart);
+        burst(x, y);
+        name.addEventListener('animationend', () => name.remove(), {once:true});
+        heart.addEventListener('animationend', () => heart.remove(), {once:true});
       });
     })();
   </script>
